@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'staging', 'production'], description: 'Choose the environment to deploy to')
+    }
+    environment {
+        APP_ENV = "${params.DEPLOY_ENV}"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo "Building the Flask application for ${APP_ENV} environment..."
+                sh 'pip install -r requirements.txt'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo "Running tests for ${APP_ENV} environment..."
+                sh 'pytest'
+            }
+        }
+        stage('Deploy') {
+            when {
+                anyOf {
+                    expression { params.DEPLOY_ENV == 'dev' }
+                    expression { params.DEPLOY_ENV == 'staging' }
+                    expression { params.DEPLOY_ENV == 'production' }
+                }
+            }
+            steps {
+                echo "Deploying the Flask application to ${APP_ENV} environment..."
+                // Add deployment steps here
+                // e.g., `sh 'deploy.sh'`
+            }
+        }
+    }
+    post {
+        always {
+            echo "Cleaning up..."
+            // Add cleanup steps if needed
+        }
+    }
+}
